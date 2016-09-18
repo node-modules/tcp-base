@@ -1,0 +1,49 @@
+{
+  "name": "tcp-base",
+  "version": "1.0.0",
+  "description": "A base class for tcp client with basic functions",
+  "main": "lib/base.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "lint": "eslint --ext .js lib test example",
+    "test": "npm run lint && npm run test-local",
+    "test-local": "egg-bin test",
+    "cov": "egg-bin cov",
+    "ci": "npm run lint && npm run cov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/node-modules/tcp-base.git"
+  },
+  "keywords": [
+    "tcp"
+  ],
+  "author": "gxcsoccer <gxcsoccer@126.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/node-modules/tcp-base/issues"
+  },
+  "homepage": "https://github.com/node-modules/tcp-base#readme",
+  "engines": {
+    "node": ">= 4.0.0"
+  },
+  "ci": {
+    "version": "4, 6"
+  },
+  "devDependencies": {
+    "egg-bin": "^1.3.0",
+    "egg-ci": "^1.0.3",
+    "eslint": "^3.5.0",
+    "eslint-config-egg": "^3.1.0",
+    "mm": "^2.0.0",
+    "npminstall": "^2.2.2",
+    "pedding": "^1.0.0",
+    "should": "^11.1.0"
+  },
+  "dependencies": {
+    "is-type-of": "^1.0.0",
+    "sdk-base": "^2.0.1"
+  }
+}
