@@ -579,4 +579,28 @@ describe('test/index.test.js', () => {
       done();
     });
   });
+
+  it('should not emit PacketParsedError  if error occurred in callback function', done => {
+    const listeners = process.listeners('uncaughtException');
+    process.removeAllListeners('uncaughtException');
+
+    const handle = err => {
+      assert(err.message === 'callbackError');
+      process.removeAllListeners('uncaughtException');
+      listeners.forEach(listener => {
+        process.on('uncaughtException', listener);
+      });
+      done();
+    };
+    process.on('uncaughtException', handle);
+
+    client.on('error', () => {
+      assert(false, 'should not run');
+    });
+
+    client.send(makeRequest(1), err => {
+      should.not.exist(err);
+      throw new Error('callbackError');
+    });
+  });
 });
