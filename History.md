@@ -1,4 +1,9 @@
 
+1.0.2 / 2016-11-11
+==================
+
+  * fix: use heartbeat logic to handle that connection stuck in CLOSE_WAIT status (#3)
+
 1.0.1 / 2016-10-20
 ==================
 
