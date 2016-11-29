@@ -80,7 +80,7 @@ describe('test/close_wait.test.js', () => {
       client.on('error', err => {
         should.exist(err);
         err.name.should.eql('ServerNoResponseError');
-        err.message.should.match(/server no response in \d+ms, maybe the socket is end on the other side/i);
+        err.message.should.match(/server 127.0.0.1:9600 no response in \d+ms, maybe the socket is end on the other side/i);
         done();
       });
     });
