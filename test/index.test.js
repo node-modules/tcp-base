@@ -322,7 +322,8 @@ describe('test/index.test.js', () => {
       noResponse: true,
     }, false), err => {
       should.exist(err);
-      err.socketMeta.should.have.properties('id', 'dataLength', 'bufferSize1', 'bufferSize2', 'startTime', 'endTime');
+      err.socketMeta.should.have.properties('id', 'dataLength', 'bufferSize1', 'bufferSize2', 'startTime', 'endTime', 'succ');
+      err.socketMeta.succ.should.be.ok();
       err.message.should.equal('Server no response in 3000ms, address#127.0.0.1:12201');
       done();
     });
