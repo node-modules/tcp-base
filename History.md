@@ -1,4 +1,10 @@
 
+1.1.0 / 2016-11-30
+==================
+
+  * feat: add heartbeat timeout server host
+  * feat: add socket write status
+
 1.0.2 / 2016-11-11
 ==================
 
