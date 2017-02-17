@@ -1,7 +1,6 @@
 'use strict';
 
 const mm = require('mm');
-const should = require('should');
 const assert = require('assert');
 const pedding = require('pedding');
 const TCPBase = require('../');
@@ -99,17 +98,17 @@ describe('test/index.test.js', () => {
   });
 
   it('client should be ok', () => {
-    client.isOK.should.be.ok;
+    assert(client.isOK);
   });
 
   it('should get address ok', () => {
-    should(client.address).equal('127.0.0.1:12201');
+    assert(client.address === '127.0.0.1:12201');
   });
 
   it('should send request ok', done => {
     client.send(makeRequest(1), (err, res) => {
-      should.not.exist(err);
-      res.should.eql({
+      assert.ifError(err);
+      assert.deepEqual(res, {
         id: 1,
         message: 'hello',
       });
@@ -119,7 +118,7 @@ describe('test/index.test.js', () => {
 
   it('should send thunk ok', function* () {
     const res = yield client.sendThunk(makeRequest(2));
-    res.should.eql({
+    assert.deepEqual(res, {
       id: 2,
       message: 'hello',
     });
@@ -130,7 +129,7 @@ describe('test/index.test.js', () => {
       id: 3,
       noResponse: true,
     }, true));
-    client._invokes.size.should.equal(0);
+    assert(client._invokes.size === 0);
   });
 
   it('should emit error if connect timeout', done => {
@@ -139,8 +138,8 @@ describe('test/index.test.js', () => {
       port: 12000,
     });
     client.on('error', err => {
-      should.exist(err);
-      err.message.should.containEql('connect ECONNREFUSED 127.0.0.1:12000');
+      assert(err);
+      assert(err.message.includes('connect ECONNREFUSED 127.0.0.1:12000'));
       done();
     });
   });
@@ -162,8 +161,8 @@ describe('test/index.test.js', () => {
 
     setTimeout(() => {
       client.send(makeRequest(1), (err, res) => {
-        should.not.exist(err);
-        res.should.eql({
+        assert.ifError(err);
+        assert.deepEqual(res, {
           id: 1,
           message: 'hello',
         });
@@ -188,7 +187,7 @@ describe('test/index.test.js', () => {
     client.close();
 
     const res = yield client.sendThunk(makeRequest(2));
-    res.should.eql({
+    assert.deepEqual(res, {
       id: 2,
       message: 'hello',
     });
@@ -203,8 +202,8 @@ describe('test/index.test.js', () => {
     client.close();
 
     client.send(makeRequest(1), err => {
-      should.exist(err);
-      err.name.should.eql('SocketCloseError');
+      assert(err);
+      assert(err.name === 'SocketCloseError');
       done();
     });
   });
@@ -219,7 +218,7 @@ describe('test/index.test.js', () => {
     client.close();
 
     client.send(makeRequest(1), err => {
-      should.not.exist(err);
+      assert.ifError(err);
       done();
     });
   });
@@ -241,14 +240,14 @@ describe('test/index.test.js', () => {
       };
 
       client.send(makeRequest(1), err => {
-        should.not.exist(err);
+        assert.ifError(err);
         done();
       });
     });
 
 
     client.send(makeRequest(1), err => {
-      err.message.should.eql('mock error');
+      assert(err.message === 'mock error');
     });
   });
 
@@ -269,7 +268,7 @@ describe('test/index.test.js', () => {
     });
 
     client.send(makeRequest(1), err => {
-      should.exist(err);
+      assert(err);
       done();
     });
   });
@@ -283,14 +282,14 @@ describe('test/index.test.js', () => {
     });
 
     client.on('error', err => {
-      should.exist(err);
-      err.message.should.eql('mock error');
+      assert(err);
+      assert(err.message === 'mock error');
       done();
     });
 
     client.send(makeRequest(1), err => {
-      should.exist(err);
-      err.message.should.eql('mock error');
+      assert(err);
+      assert(err.message === 'mock error');
       done();
     });
   });
@@ -304,14 +303,14 @@ describe('test/index.test.js', () => {
     });
 
     client.on('error', err => {
-      should.exist(err);
-      err.message.should.eql('mock error');
+      assert(err);
+      assert(err.message === 'mock error');
       done();
     });
 
     client.send(makeRequest(1), err => {
-      should.exist(err);
-      err.message.should.eql('mock error');
+      assert(err);
+      assert(err.message === 'mock error');
       done();
     });
   });
@@ -321,10 +320,13 @@ describe('test/index.test.js', () => {
       id: 4,
       noResponse: true,
     }, false), err => {
-      should.exist(err);
-      err.socketMeta.should.have.properties('id', 'dataLength', 'bufferSize1', 'bufferSize2', 'startTime', 'endTime', 'writeSuccess');
-      err.socketMeta.writeSuccess.should.be.ok();
-      err.message.should.equal('Server no response in 3000ms, address#127.0.0.1:12201');
+      assert(err);
+      [ 'id', 'dataLength', 'bufferSize1', 'bufferSize2', 'startTime', 'endTime', 'writeSuccess' ]
+      .forEach(p => {
+        assert(err.socketMeta.hasOwnProperty(p));
+      });
+      assert(err.socketMeta.writeSuccess);
+      assert(err.message === 'Server no response in 3000ms, address#127.0.0.1:12201');
       done();
     });
   });
@@ -354,22 +356,22 @@ describe('test/index.test.js', () => {
           id: 2,
           timeout: 2000,
         }), err => {
-          should.exist(err);
-          err.name.should.eql('SocketCloseError');
+          assert(err);
+          assert(err.name === 'SocketCloseError');
         });
         cli._queue.push([ makeRequest(1, {
           id: 1,
           timeout: 2000,
         }), err => {
-          should.exist(err);
-          err.name.should.eql('SocketCloseError');
+          assert(err);
+          assert(err.name === 'SocketCloseError');
         } ]);
         cli.close();
       })
       .catch(err => done(err));
     cli.on('close', () => {
-      cli._invokes.size.should.equal(0);
-      cli._queue.length.should.equal(0);
+      assert(cli._invokes.size === 0);
+      assert(cli._queue.length === 0);
       done();
     });
   });
@@ -381,7 +383,7 @@ describe('test/index.test.js', () => {
     });
     yield client.ready();
     const res = yield client.sendThunk(makeRequest(1));
-    res.should.eql({
+    assert.deepEqual(res, {
       id: 1,
       message: 'hello',
     });
@@ -392,30 +394,28 @@ describe('test/index.test.js', () => {
       host: '127.0.0.1',
       port: 12201,
     });
-    should.exist(client._heartbeatTimer);
+    assert(client._heartbeatTimer);
     mm(client._socket, 'write', buf => {
-      buf.toString().should.be.eql(client.heartBeatPacket.toString());
+      assert(buf.toString() === client.heartBeatPacket.toString());
       done();
     });
   });
 
   it('should override sendHeartBeat', function(done) {
-    class Client5 extends Client {
-      sendHeartBeat() {
-        this.send(makeRequest(10), (err, res) => {
-          this.emit('heartbeat', res);
-        });
-      }
-    }
-
-    const client = new Client5({
+    const client = new Client({
       host: '127.0.0.1',
       port: 12201,
     });
 
-    should.exist(client._heartbeatTimer);
+    mm(client, 'sendHeartBeat', function() {
+      this.send(makeRequest(10), (err, res) => {
+        this.emit('heartbeat', res);
+      });
+    });
+
+    assert(client._heartbeatTimer);
     client.on('heartbeat', data => {
-      data.id.should.be.eql(10);
+      assert(data.id === 10);
       client.close();
       done();
     });
@@ -457,8 +457,8 @@ describe('test/index.test.js', () => {
       port: 12201,
     });
     client.send(makeRequest(1), (err, res) => {
-      should.not.exist(err);
-      res.should.eql({
+      assert.ifError(err);
+      assert.deepEqual(res, {
         id: 1,
         message: 'hello',
       });
@@ -476,8 +476,8 @@ describe('test/index.test.js', () => {
       data: header,
     };
     client.send(request, (err, res) => {
-      should.not.exist(err);
-      should.not.exist(res);
+      assert.ifError(err);
+      assert(!res);
       done();
     });
   });
@@ -509,7 +509,7 @@ describe('test/index.test.js', () => {
     });
 
     client.send(makeRequest(1), err => {
-      should.not.exist(err);
+      assert.ifError(err);
     });
   });
 
@@ -539,14 +539,14 @@ describe('test/index.test.js', () => {
     };
 
     client.send(makeRequest(10, c0), (err, res) => {
-      should.not.exist(err);
-      res.should.eql(c0);
+      assert.ifError(err);
+      assert.deepEqual(res, c0);
       done();
     });
 
     client.send(makeRequest(11, c1), (err, res) => {
-      should.not.exist(err);
-      res.should.eql(c1);
+      assert.ifError(err);
+      assert.deepEqual(res, c1);
       done();
     });
 
@@ -563,20 +563,20 @@ describe('test/index.test.js', () => {
       }, true));
 
       client.send(makeRequest(17), (err, res) => {
-        should.not.exist(err);
-        res.should.eql({ id: 17, message: 'hello' });
+        assert.ifError(err);
+        assert.deepEqual(res, { id: 17, message: 'hello' });
         done();
       });
 
       const queue = client._queue;
-      queue.length.should.eql(2);
-      queue[0][0].id.should.eql(12);
-      queue[1][0].id.should.eql(17);
+      assert(queue.length === 2);
+      assert(queue[0][0].id === 12);
+      assert(queue[1][0].id === 17);
     }, 600);
 
     client.send(makeRequest(12, c2), (err, res) => {
-      should.not.exist(err);
-      res.should.eql(c2);
+      assert.ifError(err);
+      assert.deepEqual(res, c2);
       done();
     });
   });
@@ -600,7 +600,7 @@ describe('test/index.test.js', () => {
     });
 
     client.send(makeRequest(1), err => {
-      should.not.exist(err);
+      assert.ifError(err);
       throw new Error('callbackError');
     });
   });
