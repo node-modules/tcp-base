@@ -27,7 +27,7 @@ A base class for tcp client with basic functions
 $ npm install tcp-base --save
 ```
 
-Node.js >= 4.0.0 required
+Node.js >= 6.0.0 required
 
 ## Usage 
 
