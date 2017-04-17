@@ -1,20 +1,19 @@
 'use strict';
 
 const mm = require('mm');
+const TCPBase = require('../');
 const assert = require('assert');
 const pedding = require('pedding');
-const TCPBase = require('../');
+const { sleep } = require('mz-modules');
 const server = require('./support/server');
 
 describe('test/index.test.js', () => {
-
   class Client extends TCPBase {
     constructor(options) {
       Object.assign(options, {
         headerLength: 8,
         heartbeatInterval: 3000,
       });
-
       super(options);
     }
 
@@ -92,8 +91,9 @@ describe('test/index.test.js', () => {
 
   afterEach(mm.restore);
 
-  after(() => {
-    client.close();
+  after(function* () {
+    yield client.close();
+    yield client.close();
     server.close();
   });
 
@@ -171,27 +171,27 @@ describe('test/index.test.js', () => {
     }, 1000);
   });
 
-  it('should emit close in the same tick', function* () {
-    let client = new Client({
-      host: '127.0.0.1',
-      port: 12201,
-    });
+  // it('should emit close in the same tick', function* () {
+  //   let client = new Client({
+  //     host: '127.0.0.1',
+  //     port: 12201,
+  //   });
 
-    client.on('close', () => {
-      client = new Client({
-        host: '127.0.0.1',
-        port: 12201,
-      });
-    });
+  //   client.on('close', () => {
+  //     client = new Client({
+  //       host: '127.0.0.1',
+  //       port: 12201,
+  //     });
+  //   });
 
-    client.close();
+  //   client.close();
 
-    const res = yield client.sendThunk(makeRequest(2));
-    assert.deepEqual(res, {
-      id: 2,
-      message: 'hello',
-    });
-  });
+  //   const res = yield client.sendThunk(makeRequest(2));
+  //   assert.deepEqual(res, {
+  //     id: 2,
+  //     message: 'hello',
+  //   });
+  // });
 
   it('should emit error if socket has been closed', done => {
     const client = new Client3({
@@ -238,16 +238,14 @@ describe('test/index.test.js', () => {
           data,
         };
       };
-
       client.send(makeRequest(1), err => {
         assert.ifError(err);
         done();
       });
     });
 
-
     client.send(makeRequest(1), err => {
-      assert(err.message === 'mock error');
+      assert(err.message.includes('mock error'));
     });
   });
 
@@ -258,15 +256,12 @@ describe('test/index.test.js', () => {
       port: 12200,
       reConnectTimes: 5,
     });
-
     client.on('error', err => {
-      console.log(err);
+      console.log(err.message);
     });
-
     client.on('close', () => {
       done();
     });
-
     client.send(makeRequest(1), err => {
       assert(err);
       done();
@@ -283,13 +278,13 @@ describe('test/index.test.js', () => {
 
     client.on('error', err => {
       assert(err);
-      assert(err.message === 'mock error');
+      assert(err.message.includes('mock error'));
       done();
     });
 
     client.send(makeRequest(1), err => {
       assert(err);
-      assert(err.message === 'mock error');
+      assert(err.message.includes('mock error'));
       done();
     });
   });
@@ -304,13 +299,13 @@ describe('test/index.test.js', () => {
 
     client.on('error', err => {
       assert(err);
-      assert(err.message === 'mock error');
+      assert(err.message.includes('mock error'));
       done();
     });
 
     client.send(makeRequest(1), err => {
       assert(err);
-      assert(err.message === 'mock error');
+      assert(err.message.includes('mock error'));
       done();
     });
   });
@@ -389,36 +384,41 @@ describe('test/index.test.js', () => {
     });
   });
 
-  it('should send heartbeat request', function(done) {
+  it('should send heartbeat request', function* () {
     const client = new Client({
       host: '127.0.0.1',
       port: 12201,
     });
+    yield client.ready();
+    yield sleep(100);
     assert(client._heartbeatTimer);
     mm(client._socket, 'write', buf => {
-      assert(buf.toString() === client.heartBeatPacket.toString());
-      done();
+      assert.deepEqual(buf, client.heartBeatPacket);
+      client.emit('heartbeat');
     });
+    yield client.await('heartbeat');
+    yield client.close();
   });
 
-  it('should override sendHeartBeat', function(done) {
+  it('should override sendHeartBeat', function* () {
     const client = new Client({
       host: '127.0.0.1',
       port: 12201,
     });
 
-    mm(client, 'sendHeartBeat', function() {
-      this.send(makeRequest(10), (err, res) => {
-        this.emit('heartbeat', res);
+    mm(client, 'sendHeartBeat', () => {
+      client.send(makeRequest(10), (err, res) => {
+        client.emit('heartbeat', res);
       });
     });
 
+    yield client.ready();
+    yield sleep(100);
+
     assert(client._heartbeatTimer);
-    client.on('heartbeat', data => {
-      assert(data.id === 10);
-      client.close();
-      done();
-    });
+    const heartbeat = yield client.await('heartbeat');
+    assert(heartbeat.id === 10);
+    yield client.close();
   });
 
   it('should support concurrent', function* () {
@@ -504,10 +504,6 @@ describe('test/index.test.js', () => {
       }
     });
 
-    client.on('error', () => {
-      assert(false, 'should not run');
-    });
-
     client.send(makeRequest(1), err => {
       assert.ifError(err);
     });
@@ -518,45 +514,45 @@ describe('test/index.test.js', () => {
     // 1. send 正常请求,
     // 2. 连续 send oneway 请求.
     // 3. 验证 queue 的数量和队列的内容是否符合预期.
-    done = pedding(4, done);
+    done = pedding(5, done);
+
+    client.once('error', err => {
+      assert(err.message === '[TCPBase] the socket is not writable while sending a oneway packet');
+      assert(err.id && err.data);
+      done();
+    });
 
     const c0 = {
       id: 10,
       message: 'hello',
       timeout: 100,
     };
-
     const c1 = {
       id: 11,
       message: 'hello',
       timeout: 500,
     };
-
     const c2 = {
       id: 12,
       message: 'hello',
       timeout: 1000,
     };
-
     client.send(makeRequest(10, c0), (err, res) => {
       assert.ifError(err);
       assert.deepEqual(res, c0);
       done();
     });
-
     client.send(makeRequest(11, c1), (err, res) => {
       assert.ifError(err);
       assert.deepEqual(res, c1);
       done();
     });
-
     setTimeout(() => {
       // c1 目前已经在 queue 里面, 然后连续添加2个 oneway.
       client.send(makeRequest(15, {
         id: 5,
         oneway: true,
       }, true));
-
       client.send(makeRequest(16, {
         id: 6,
         oneway: true,
@@ -581,7 +577,7 @@ describe('test/index.test.js', () => {
     });
   });
 
-  it('should not emit PacketParsedError  if error occurred in callback function', done => {
+  it('should not emit PacketParsedError if error occurred in callback function', done => {
     const listeners = process.listeners('uncaughtException');
     process.removeAllListeners('uncaughtException');
 
@@ -603,5 +599,38 @@ describe('test/index.test.js', () => {
       assert.ifError(err);
       throw new Error('callbackError');
     });
+  });
+
+  it('should not emit Error if socket ECONNRESET', function* () {
+    const client = new Client({
+      host: '127.0.0.1',
+      port: 12201,
+    });
+    yield client.ready();
+    const err = new Error('123');
+    err.code = 'ECONNRESET';
+    client._socket.on('error', () => {
+      client._socket.destroy();
+    });
+    yield Promise.race([
+      client.await('error'),
+      client.await('close'),
+      client._socket.emit('error', err),
+    ]);
+  });
+
+  it('should handle connect timeout ok', function* () {
+    const client = new Client({
+      host: '1.1.1.1',
+      port: 12200,
+      connectTimeout: 300,
+    });
+    try {
+      yield client.ready();
+      assert(false, 'should not run here');
+    } catch (err) {
+      assert(err.name === 'TcpConnectionTimeoutError');
+      assert(err.message.includes('[TCPBase] socket connect timeout (300ms)'));
+    }
   });
 });
