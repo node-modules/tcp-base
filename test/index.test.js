@@ -208,66 +208,6 @@ describe('test/index.test.js', () => {
     });
   });
 
-  it('should reconnect after socket was closed and invoke ok', done => {
-    const client = new Client({
-      host: '127.0.0.1',
-      port: 12201,
-      reConnectTimes: 1,
-    });
-
-    client.close();
-
-    client.send(makeRequest(1), err => {
-      assert.ifError(err);
-      done();
-    });
-  });
-
-  it('should reconnect after packet parsed error and invoke ok', done => {
-    const client = new Client3({
-      host: '127.0.0.1',
-      port: 12201,
-      reConnectTimes: 5,
-    });
-
-    client.on('error', () => {
-      client.decode = (buf, header) => {
-        const data = JSON.parse(buf);
-        return {
-          id: header.readInt32BE(4),
-          data,
-        };
-      };
-      client.send(makeRequest(1), err => {
-        assert.ifError(err);
-        done();
-      });
-    });
-
-    client.send(makeRequest(1), err => {
-      assert(err.message.includes('mock error'));
-    });
-  });
-
-  it('should reconnect and emit error if still can\'t connect', done => {
-    done = pedding(2, done);
-    const client = new Client({
-      host: '127.0.0.1',
-      port: 12200,
-      reConnectTimes: 5,
-    });
-    client.on('error', err => {
-      console.log(err.message);
-    });
-    client.on('close', () => {
-      done();
-    });
-    client.send(makeRequest(1), err => {
-      assert(err);
-      done();
-    });
-  });
-
   it('should emit error if parse header error', done => {
     done = pedding(2, done);
 
@@ -514,14 +454,7 @@ describe('test/index.test.js', () => {
     // 1. send 正常请求,
     // 2. 连续 send oneway 请求.
     // 3. 验证 queue 的数量和队列的内容是否符合预期.
-    done = pedding(5, done);
-
-    client.once('error', err => {
-      assert(err.message === '[TCPBase] the socket is not writable while sending a oneway packet');
-      assert(err.id && err.data);
-      done();
-    });
-
+    done = pedding(4, done);
     const c0 = {
       id: 10,
       message: 'hello',
@@ -631,6 +564,32 @@ describe('test/index.test.js', () => {
     } catch (err) {
       assert(err.name === 'TcpConnectionTimeoutError');
       assert(err.message.includes('[TCPBase] socket connect timeout (300ms)'));
+    }
+  });
+
+  it('should get error if socket is closed', function* () {
+    const client = new Client({
+      host: '127.0.0.1',
+      port: 12201,
+      connectTimeout: 300,
+    });
+    yield client.ready();
+    yield client.close();
+    try {
+      yield client.sendThunk(makeRequest(1));
+      assert(false, 'should not run here');
+    } catch (err) {
+      assert(err && err.message === '[TCPBase] The socket was closed. (address: 127.0.0.1:12201)');
+    }
+    try {
+      yield Promise.race([
+        client.await('error'),
+        client.send(makeRequest(2, 'haha', true)),
+      ]);
+      assert(false, 'should not run here');
+    } catch (err) {
+      assert(err && err.message === '[TCPBase] The socket was closed. (address: 127.0.0.1:12201)');
+      assert(err.oneway === true);
     }
   });
 });

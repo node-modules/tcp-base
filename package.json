@@ -12,7 +12,8 @@
     "test": "npm run lint && npm run test-local",
     "test-local": "egg-bin test",
     "cov": "egg-bin cov",
-    "ci": "npm run lint && npm run cov"
+    "ci": "npm run lint && npm run cov",
+    "contributors": "contributors"
   },
   "repository": {
     "type": "git",
