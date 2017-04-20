@@ -1,4 +1,10 @@
 
+3.0.0 / 2017-04-20
+==================
+
+  * fix: invoke oneway after socket closed (#7)
+  * refactor: [BREAKING-CHANGE] not support reconnect
+
 2.0.0 / 2017-02-17
 ==================
 
