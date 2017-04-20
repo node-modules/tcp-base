@@ -7,12 +7,13 @@
     "lib"
   ],
   "scripts": {
-    "autod": "autod -w --prefix '^'",
-    "lint": "eslint --ext .js lib test example",
+    "autod": "autod",
+    "lint": "eslint --ext .js .",
     "test": "npm run lint && npm run test-local",
     "test-local": "egg-bin test",
     "cov": "egg-bin cov",
-    "ci": "npm run lint && npm run cov"
+    "ci": "npm run lint && npm run cov",
+    "contributors": "contributors"
   },
   "repository": {
     "type": "git",
@@ -34,17 +35,19 @@
     "version": "6, 7"
   },
   "devDependencies": {
-    "autod": "^2.7.1",
-    "egg-bin": "^2.2.0",
-    "egg-ci": "^1.1.0",
-    "eslint": "^3.15.0",
+    "autod": "^2.8.0",
+    "contributors": "^0.5.1",
+    "egg-bin": "^3.3.0",
+    "egg-ci": "^1.6.0",
+    "eslint": "^3.19.0",
     "eslint-config-egg": "^3.2.0",
     "mm": "^2.1.0",
-    "npminstall": "^2.24.0",
+    "mz-modules": "^1.0.0",
+    "npminstall": "^2.29.1",
     "pedding": "^1.1.0"
   },
   "dependencies": {
     "is-type-of": "^1.0.0",
-    "sdk-base": "^3.1.0"
+    "sdk-base": "^3.1.1"
   }
 }

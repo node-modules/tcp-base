@@ -78,6 +78,7 @@ describe('test/close_wait.test.js', () => {
       client.on('close', done);
       client.on('error', err => {
         assert(err);
+        console.log(err);
         assert(err.name === 'ServerNoResponseError');
         assert(/server 127.0.0.1:9600 no response in \d+ms, maybe the socket is end on the other side/i.test(err.message));
         done();
