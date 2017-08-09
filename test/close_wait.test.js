@@ -1,6 +1,6 @@
 'use strict';
 
-const should = require('should');
+const assert = require('assert');
 const pedding = require('pedding');
 const TCPBase = require('../');
 const server = require('./support/server_end');
@@ -78,9 +78,11 @@ describe('test/close_wait.test.js', () => {
       });
       client.on('close', done);
       client.on('error', err => {
-        should.exist(err);
-        err.name.should.eql('ServerNoResponseError');
-        err.message.should.match(/server 127.0.0.1:9600 no response in \d+ms, maybe the socket is end on the other side/i);
+        assert(err);
+        assert(err.name === 'ServerNoResponseError');
+        assert(
+          /server 127.0.0.1:9600 no response in \d+ms, maybe the socket is end on the other side/i.test(err.message)
+        );
         done();
       });
     });
