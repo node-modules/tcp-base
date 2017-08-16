@@ -171,6 +171,25 @@ describe('test/index.test.js', () => {
     }, 1000);
   });
 
+  it('should handle error if socket is closed', done => {
+    const client = new Client({
+      host: '127.0.0.1',
+      port: 12201,
+    });
+
+    client.on('close', () => {
+      setTimeout(() => {
+        client.send(makeRequest(1), err => {
+          assert(err);
+          client.emit('error', err);
+          done();
+        });
+      }, 1000);
+    });
+
+    client._socket.destroy();
+  });
+
   it('should emit close in the same tick', function* () {
     let client = new Client({
       host: '127.0.0.1',
