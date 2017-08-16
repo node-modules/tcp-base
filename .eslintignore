@@ -1,5 +1,5 @@
 test/fixtures
-coverage/
+coverage
 examples/**/app/public
 logs
 run
