@@ -1,4 +1,13 @@
 
+3.1.0 / 2017-12-01
+==================
+
+**features**
+  * [[`e59388a`](http://github.com/node-modules/tcp-base/commit/e59388a564304803d0b85222bce1dc3e945f6fac)] - feat: support unix-domain-socket (#11) (fisher <<fishbar@users.noreply.github.com>>)
+
+**others**
+  * [[`f9c56ee`](http://github.com/node-modules/tcp-base/commit/f9c56ee64afb38b4062e5f1a247db45cbce4192c)] - chore: bump to 3.0.0 (xiaochen.gaoxc <<xiaochen.gaoxc@alibaba-inc.com>>),
+
 3.0.0 / 2017-04-20
 ==================
 
