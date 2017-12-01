@@ -1,6 +1,8 @@
 'use strict';
 
 const mm = require('mm');
+const os = require('os');
+const path = require('path');
 const TCPBase = require('../');
 const assert = require('assert');
 const pedding = require('pedding');
@@ -75,6 +77,8 @@ describe('test/index.test.js', () => {
   }
 
   let client;
+  let client2;
+  const sockPath = path.join(os.tmpdir(), 'tcp-base-test.sock');
   before(done => {
     server.start(12201, err => {
       if (err) {
@@ -85,7 +89,22 @@ describe('test/index.test.js', () => {
         port: 12201,
       });
 
-      client.ready(done);
+      client.ready(() => {
+        if (os.platform() === 'win32') {
+          done();
+        } else {
+          server.start(sockPath, err => {
+            if (err) {
+              return done(err);
+            }
+            client2 = new Client({
+              path: sockPath,
+            });
+
+            client2.ready(done);
+          });
+        }
+      });
     });
   });
 
@@ -94,6 +113,9 @@ describe('test/index.test.js', () => {
   after(function* () {
     yield client.close();
     yield client.close();
+    if (client2) {
+      client2.close();
+    }
     server.close();
   });
 
@@ -115,6 +137,22 @@ describe('test/index.test.js', () => {
       done();
     });
   });
+
+  if (client2) {
+    it('client2 should be ok', () => {
+      assert(client2.isOK);
+    });
+    it('client2 should send request ok', done => {
+      client2.send(makeRequest(1001), (err, res) => {
+        assert.ifError(err);
+        assert.deepEqual(res, {
+          id: 1001,
+          message: 'hello',
+        });
+        done();
+      });
+    });
+  }
 
   it('should send thunk ok', function* () {
     const res = yield client.sendThunk(makeRequest(2));
