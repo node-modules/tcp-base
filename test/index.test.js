@@ -295,9 +295,9 @@ describe('test/index.test.js', () => {
     }, false), err => {
       assert(err);
       [ 'id', 'dataLength', 'bufferSize1', 'bufferSize2', 'startTime', 'endTime', 'writeSuccess' ]
-      .forEach(p => {
-        assert(err.socketMeta.hasOwnProperty(p));
-      });
+        .forEach(p => {
+          assert(err.socketMeta.hasOwnProperty(p));
+        });
       assert(err.socketMeta.writeSuccess);
       assert(err.message === 'Server no response in 3000ms, address#127.0.0.1:12201');
       done();
