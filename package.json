@@ -1,6 +1,6 @@
 {
   "name": "tcp-base",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "A base class for tcp client with basic functions",
   "main": "lib/base.js",
   "files": [
