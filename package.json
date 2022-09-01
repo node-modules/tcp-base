@@ -7,7 +7,6 @@
     "lib"
   ],
   "scripts": {
-    "autod": "autod",
     "lint": "eslint --ext .js .",
     "test": "npm run lint && npm run test-local",
     "test-local": "egg-bin test",
@@ -32,18 +31,17 @@
     "node": ">= 6.0.0"
   },
   "ci": {
-    "version": "6, 7"
+    "version": "12, 14, 16, 18",
+    "os": "linux"
   },
   "devDependencies": {
-    "autod": "^2.8.0",
     "contributors": "^0.5.1",
-    "egg-bin": "^3.3.0",
-    "egg-ci": "^1.6.0",
-    "eslint": "^3.19.0",
-    "eslint-config-egg": "^3.2.0",
+    "egg-bin": "^5.2.0",
+    "egg-ci": "^2.1.0",
+    "eslint": "^8.23.0",
+    "eslint-config-egg": "^12.0.0",
     "mm": "^2.1.0",
     "mz-modules": "^1.0.0",
-    "npminstall": "^2.29.1",
     "pedding": "^1.1.0"
   },
   "dependencies": {
