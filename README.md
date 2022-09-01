@@ -1,39 +1,33 @@
 # tcp-base
+
 A base class for tcp client with basic functions
 
 [![NPM version][npm-image]][npm-url]
-[![build status][travis-image]][travis-url]
+[![Node.js CI](https://github.com/node-modules/tcp-base/actions/workflows/nodejs.yml/badge.svg)](https://github.com/node-modules/tcp-base/actions/workflows/nodejs.yml)
 [![Test coverage][codecov-image]][codecov-url]
-[![David deps][david-image]][david-url]
-[![Known Vulnerabilities][snyk-image]][snyk-url]
 [![npm download][download-image]][download-url]
 
 [npm-image]: https://img.shields.io/npm/v/tcp-base.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/tcp-base
-[travis-image]: https://img.shields.io/travis/node-modules/tcp-base.svg?style=flat-square
-[travis-url]: https://travis-ci.org/node-modules/tcp-base
 [codecov-image]: https://codecov.io/gh/node-modules/tcp-base/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/node-modules/tcp-base
-[david-image]: https://img.shields.io/david/node-modules/tcp-base.svg?style=flat-square
-[david-url]: https://david-dm.org/node-modules/tcp-base
-[snyk-image]: https://snyk.io/test/npm/tcp-base/badge.svg?style=flat-square
-[snyk-url]: https://snyk.io/test/npm/tcp-base
 [download-image]: https://img.shields.io/npm/dm/tcp-base.svg?style=flat-square
 [download-url]: https://npmjs.org/package/tcp-base
 
 ## Install
 
 ```bash
-$ npm install tcp-base --save
+npm install tcp-base --save
 ```
 
 Node.js >= 6.0.0 required
 
-## Usage 
+## Usage
 
 A quick guide to implement a tcp echo client
 
 Client:
+
 ```js
 'use strict';
 
@@ -92,6 +86,7 @@ client.send({
 ```
 
 Server:
+
 ```js
 'use strict';
 
