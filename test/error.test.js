@@ -50,8 +50,8 @@ describe('test/error.test.js', () => {
     };
   }
 
-  describe('end by server', () => {
-    it('should not throw uncaughtExeception if socket has been destroyed', done => {
+  describe('should not throw uncaughtExeception', () => {
+    it('when socket has been destroyed', done => {
       server.start(9090, () => {
         const client = new Client({
           host: '127.0.0.1',
@@ -59,9 +59,29 @@ describe('test/error.test.js', () => {
         });
 
         client.once('connect', () => {
-          client.send({ data: 'foo' });
+          client.send({ id: 'foo', data: 'bar1' });
           server.close();
-          client.send({ data: 'foo' });
+          client.send({ id: 'foo', data: 'bar2' });
+        });
+        client.on('error', err => err);
+        client.on('close', () => console.log('close'));
+        setTimeout(done, 5000);
+      });
+    });
+
+    it('when receive error multiple times', done => {
+      server.start(9090, () => {
+        const client = new Client({
+          host: '127.0.0.1',
+          port: 9090,
+        });
+
+        client.once('connect', () => {
+          server.close();
+          const error = new Error('ECONNRESET');
+          error.code = 'ECONNRESET';
+          client._socket && client._socket.emit('error', error);
+          client._socket && client._socket.emit('error', error);
         });
         client.on('error', err => err);
         client.on('close', () => console.log('close'));
@@ -69,5 +89,4 @@ describe('test/error.test.js', () => {
       });
     });
   });
-
 });
