@@ -29,8 +29,6 @@ A quick guide to implement a tcp echo client
 Client:
 
 ```js
-'use strict';
-
 const TCPBase = require('tcp-base');
 
 /**
