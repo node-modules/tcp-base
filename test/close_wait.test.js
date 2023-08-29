@@ -1,5 +1,3 @@
-'use strict';
-
 const assert = require('assert');
 const pedding = require('pedding');
 const TCPBase = require('../');
@@ -37,9 +35,9 @@ describe('test/close_wait.test.js', () => {
   }
 
   function makeRequest(id, content, oneway) {
-    const header = new Buffer(8);
+    const header = Buffer.alloc(8);
     header.fill(0);
-    const body = new Buffer(JSON.stringify(content || {
+    const body = Buffer.from(JSON.stringify(content || {
       id,
       message: 'hello',
     }));
