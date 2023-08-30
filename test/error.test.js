@@ -1,5 +1,3 @@
-'use strict';
-
 const TCPBase = require('../');
 const server = require('./support/server_immidiate_end');
 

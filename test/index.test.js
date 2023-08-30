@@ -1,13 +1,11 @@
-'use strict';
-
 const mm = require('mm');
 const os = require('os');
 const path = require('path');
-const TCPBase = require('../');
 const assert = require('assert');
 const pedding = require('pedding');
 const { sleep } = require('mz-modules');
 const server = require('./support/server');
+const TCPBase = require('../');
 
 describe('test/index.test.js', () => {
   class Client extends TCPBase {
@@ -60,10 +58,10 @@ describe('test/index.test.js', () => {
     }
   }
 
-  function makeRequest(id, content, oneway) {
-    const header = new Buffer(8);
+  function makeRequest(id, content, oneway, tips) {
+    const header = Buffer.alloc(8);
     header.fill(0);
-    const body = new Buffer(JSON.stringify(content || {
+    const body = Buffer.from(JSON.stringify(content || {
       id,
       message: 'hello',
     }));
@@ -71,6 +69,7 @@ describe('test/index.test.js', () => {
     header.writeInt32BE(id, 4);
     return {
       id,
+      tips,
       oneway,
       data: Buffer.concat([ header, body ]),
     };
@@ -78,15 +77,16 @@ describe('test/index.test.js', () => {
 
   let client;
   let client2;
-  const sockPath = path.join(os.tmpdir(), 'tcp-base-test.sock');
+  const sockPath = path.join(os.tmpdir(), `tcp-base-test-${Date.now()}.sock`);
+  const port = 12211;
   before(done => {
-    server.start(12201, err => {
+    server.start(port, err => {
       if (err) {
         return done(err);
       }
       client = new Client({
         host: '127.0.0.1',
-        port: 12201,
+        port,
       });
 
       client.ready(() => {
@@ -110,9 +110,9 @@ describe('test/index.test.js', () => {
 
   afterEach(mm.restore);
 
-  after(function* () {
-    yield client.close();
-    yield client.close();
+  after(async () => {
+    await client.close();
+    await client.close();
     if (client2) {
       client2.close();
     }
@@ -124,7 +124,7 @@ describe('test/index.test.js', () => {
   });
 
   it('should get address ok', () => {
-    assert(client.address === '127.0.0.1:12201');
+    assert(client.address === `127.0.0.1:${port}`);
   });
 
   it('should send request ok', done => {
@@ -154,16 +154,16 @@ describe('test/index.test.js', () => {
     });
   }
 
-  it('should send thunk ok', function* () {
-    const res = yield client.sendThunk(makeRequest(2));
+  it('should send promise ok', async () => {
+    const res = await client.sendPromise(makeRequest(2));
     assert.deepEqual(res, {
       id: 2,
       message: 'hello',
     });
   });
 
-  it('should send oneway ok', function* () {
-    yield client.sendThunk(makeRequest(3, {
+  it('should send oneway ok', async () => {
+    await client.sendPromise(makeRequest(3, {
       id: 3,
       noResponse: true,
     }, true));
@@ -185,13 +185,13 @@ describe('test/index.test.js', () => {
   it('should emit close if socket is destroyed', done => {
     let client = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
 
     client.on('close', () => {
       client = new Client({
         host: '127.0.0.1',
-        port: 12201,
+        port,
       });
     });
 
@@ -209,22 +209,22 @@ describe('test/index.test.js', () => {
     }, 1000);
   });
 
-  // it('should emit close in the same tick', function* () {
+  // it('should emit close in the same tick', async () => {
   //   let client = new Client({
   //     host: '127.0.0.1',
-  //     port: 12201,
+  //     port,
   //   });
 
   //   client.on('close', () => {
   //     client = new Client({
   //       host: '127.0.0.1',
-  //       port: 12201,
+  //       port,
   //     });
   //   });
 
   //   client.close();
 
-  //   const res = yield client.sendThunk(makeRequest(2));
+  //   const res = await client.sendPromise(makeRequest(2));
   //   assert.deepEqual(res, {
   //     id: 2,
   //     message: 'hello',
@@ -234,7 +234,7 @@ describe('test/index.test.js', () => {
   it('should emit error if socket has been closed', done => {
     const client = new Client3({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
 
     client.close();
@@ -251,7 +251,7 @@ describe('test/index.test.js', () => {
 
     const client = new Client3({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
 
     client.on('error', err => {
@@ -272,7 +272,7 @@ describe('test/index.test.js', () => {
 
     const client = new Client3({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
 
     client.on('error', err => {
@@ -299,12 +299,12 @@ describe('test/index.test.js', () => {
           assert(err.socketMeta.hasOwnProperty(p));
         });
       assert(err.socketMeta.writeSuccess);
-      assert(err.message === 'Server no response in 3000ms, address#127.0.0.1:12201');
+      assert(err.message === `Server no response in 3000ms, address#127.0.0.1:${port}`);
       done();
     });
   });
 
-  it('should wait for drain if buffer is full', function* () {
+  it('should wait for drain if buffer is full', async () => {
     const queue = [];
     const content = require('../package.json');
     for (let i = 5; i < 10000; i++) {
@@ -313,15 +313,15 @@ describe('test/index.test.js', () => {
         content,
       });
       req.timeout = 10000;
-      queue.push(client.sendThunk(req));
+      queue.push(client.sendPromise(req));
     }
-    yield queue;
+    await Promise.all(queue);
   });
 
   it('should clean all invoke if client is close', done => {
     const cli = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
     cli.ready()
       .then(() => {
@@ -349,39 +349,39 @@ describe('test/index.test.js', () => {
     });
   });
 
-  it('should override getHeader ok', function* () {
+  it('should override getHeader ok', async () => {
     const client = new Client2({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
-    yield client.ready();
-    const res = yield client.sendThunk(makeRequest(1));
+    await client.ready();
+    const res = await client.sendPromise(makeRequest(1));
     assert.deepEqual(res, {
       id: 1,
       message: 'hello',
     });
   });
 
-  it('should send heartbeat request', function* () {
+  it('should send heartbeat request', async () => {
     const client = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
-    yield client.ready();
-    yield sleep(100);
+    await client.ready();
+    await sleep(100);
     assert(client._heartbeatTimer);
     mm(client._socket, 'write', buf => {
       assert.deepEqual(buf, client.heartBeatPacket);
       client.emit('heartbeat');
     });
-    yield client.await('heartbeat');
-    yield client.close();
+    await client.await('heartbeat');
+    await client.close();
   });
 
-  it('should override sendHeartBeat', function* () {
+  it('should override sendHeartBeat', async () => {
     const client = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
 
     mm(client, 'sendHeartBeat', () => {
@@ -390,16 +390,16 @@ describe('test/index.test.js', () => {
       });
     });
 
-    yield client.ready();
-    yield sleep(100);
+    await client.ready();
+    await sleep(100);
 
     assert(client._heartbeatTimer);
-    const heartbeat = yield client.await('heartbeat');
+    const heartbeat = await client.await('heartbeat');
     assert(heartbeat.id === 10);
-    yield client.close();
+    await client.close();
   });
 
-  it('should support concurrent', function* () {
+  it('should support concurrent', async () => {
     const concurrent = 3;
 
     class Client5 extends Client2 {
@@ -418,21 +418,21 @@ describe('test/index.test.js', () => {
 
     const client = new Client5({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
     const queue = [];
     for (let i = 0; i < 20000; i++) {
       const req = makeRequest(i);
       req.timeout = 10000;
-      queue.push(client.sendThunk(req));
+      queue.push(client.sendPromise(req));
     }
-    yield queue;
+    await Promise.all(queue);
   });
 
   it('should send before ready', done => {
     const client = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
     client.send(makeRequest(1), (err, res) => {
       assert.ifError(err);
@@ -445,7 +445,7 @@ describe('test/index.test.js', () => {
   });
 
   it('should process empty body ok', done => {
-    const header = new Buffer(8);
+    const header = Buffer.alloc(8);
     header.writeInt32BE(0, 0);
     header.writeInt32BE(1000, 4);
     const request = {
@@ -572,32 +572,32 @@ describe('test/index.test.js', () => {
     });
   });
 
-  it('should not emit Error if socket ECONNRESET', function* () {
+  it('should not emit Error if socket ECONNRESET', async () => {
     const client = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
     });
-    yield client.ready();
+    await client.ready();
     const err = new Error('123');
     err.code = 'ECONNRESET';
     client._socket.on('error', () => {
       client._socket.destroy();
     });
-    yield Promise.race([
+    await Promise.race([
       client.await('error'),
       client.await('close'),
       client._socket.emit('error', err),
     ]);
   });
 
-  it('should handle connect timeout ok', function* () {
+  it('should handle connect timeout ok', async () => {
     const client = new Client({
       host: '1.1.1.1',
       port: 12200,
       connectTimeout: 300,
     });
     try {
-      yield client.ready();
+      await client.ready();
       assert(false, 'should not run here');
     } catch (err) {
       assert(err.name === 'TcpConnectionTimeoutError');
@@ -605,28 +605,29 @@ describe('test/index.test.js', () => {
     }
   });
 
-  it('should get error if socket is closed', function* () {
+  it('should get error if socket is closed', async () => {
     const client = new Client({
       host: '127.0.0.1',
-      port: 12201,
+      port,
       connectTimeout: 300,
     });
-    yield client.ready();
-    yield client.close();
+    await client.ready();
+    await client.close();
     try {
-      yield client.sendThunk(makeRequest(1));
+      await client.sendPromise(makeRequest(1, {}, false, 'useful tips here'));
       assert(false, 'should not run here');
     } catch (err) {
-      assert(err && err.message === '[TCPBase] The socket was closed. (address: 127.0.0.1:12201)');
+      assert.equal(err.tips, 'useful tips here');
+      assert(err.message === `[TCPBase] The socket was closed. (address: 127.0.0.1:${port})`);
     }
     try {
-      yield Promise.race([
+      await Promise.race([
         client.await('error'),
-        client.send(makeRequest(2, 'haha', true)),
+        client.sendPromise(makeRequest(2, 'haha', true)),
       ]);
       assert(false, 'should not run here');
     } catch (err) {
-      assert(err && err.message === '[TCPBase] The socket was closed. (address: 127.0.0.1:12201)');
+      assert(err && err.message === `[TCPBase] The socket was closed. (address: 127.0.0.1:${port})`);
       assert(err.oneway === true);
     }
   });

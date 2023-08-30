@@ -27,7 +27,7 @@ class Client extends TCPBase {
 
   // heartbeat packet
   get heartBeatPacket() {
-    return new Buffer([ 255, 255, 255, 255, 0, 0, 0, 0 ]);
+    return Buffer.from([ 255, 255, 255, 255, 0, 0, 0, 0 ]);
   }
 }
 
@@ -36,8 +36,8 @@ const client = new Client({
   port: 8080,
 });
 
-const body = new Buffer('hello');
-const data = new Buffer(8 + body.length);
+const body = Buffer.from('hello');
+const data = Buffer.alloc(8 + body.length);
 data.writeInt32BE(1, 0);
 data.writeInt32BE(body.length, 4);
 body.copy(data, 8, 0);
